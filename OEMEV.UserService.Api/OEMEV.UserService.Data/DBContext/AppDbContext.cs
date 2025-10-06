@@ -18,6 +18,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Role> Roles { get; set; }
 
+    public virtual DbSet<ServiceCenter> ServiceCenters { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
 //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -35,6 +37,7 @@ public partial class AppDbContext : DbContext
             .HasPostgresEnum("auth", "one_time_token_type", new[] { "confirmation_token", "reauthentication_token", "recovery_token", "email_change_token_new", "email_change_token_current", "phone_change_token" })
             .HasPostgresEnum("realtime", "action", new[] { "INSERT", "UPDATE", "DELETE", "TRUNCATE", "ERROR" })
             .HasPostgresEnum("realtime", "equality_op", new[] { "eq", "neq", "lt", "lte", "gt", "gte", "in" })
+            .HasPostgresEnum("storage", "buckettype", new[] { "STANDARD", "ANALYTICS" })
             .HasPostgresExtension("extensions", "pg_stat_statements")
             .HasPostgresExtension("extensions", "pgcrypto")
             .HasPostgresExtension("extensions", "uuid-ossp")
@@ -55,6 +58,39 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(now() AT TIME ZONE 'utc'::text)")
                 .HasColumnName("created_at");
+            entity.Property(e => e.Name)
+                .HasColumnType("character varying")
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<ServiceCenter>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("service_centers_pkey");
+
+            entity.ToTable("service_centers");
+
+            entity.HasIndex(e => e.Address, "service_centers_address_key").IsUnique();
+
+            entity.HasIndex(e => e.Id, "service_centers_id_key").IsUnique();
+
+            entity.HasIndex(e => e.Name, "service_centers_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Address)
+                .HasColumnType("character varying")
+                .HasColumnName("address");
+            entity.Property(e => e.ContactEmail)
+                .HasColumnType("character varying")
+                .HasColumnName("contact_email");
+            entity.Property(e => e.ContactPhone)
+                .HasColumnType("character varying")
+                .HasColumnName("contact_phone");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(now() AT TIME ZONE 'utc'::text)")
+                .HasColumnName("created_at");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
             entity.Property(e => e.Name)
                 .HasColumnType("character varying")
                 .HasColumnName("name");
@@ -88,6 +124,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PhoneNumber)
                 .HasColumnType("character varying")
                 .HasColumnName("phone_number");
+            entity.Property(e => e.RefreshToken).HasColumnName("refresh_token");
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.ServiceCenterId).HasColumnName("service_center_id");
             entity.Property(e => e.UserName)
@@ -97,6 +134,11 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .HasConstraintName("users_role_id_fkey");
+
+            entity.HasOne(d => d.ServiceCenter).WithMany(p => p.Users)
+                .HasForeignKey(d => d.ServiceCenterId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("users_service_center_id_fkey");
         });
         modelBuilder.HasSequence<int>("seq_schema_version", "graphql").IsCyclic();
 

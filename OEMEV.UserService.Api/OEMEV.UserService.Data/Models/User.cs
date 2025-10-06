@@ -23,5 +23,9 @@ public partial class User
 
     public long? ServiceCenterId { get; set; }
 
+    public string? RefreshToken { get; set; }
+
     public virtual Role Role { get; set; } = null!;
+
+    public virtual ServiceCenter? ServiceCenter { get; set; }
 }
