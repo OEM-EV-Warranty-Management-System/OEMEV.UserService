@@ -4,3 +4,6 @@ OEMEV.UserService.Api/OEMEV.UserService.DAL/obj
 OEMEV.UserService.Api/OEMEV.UserService.BLL/obj
 OEMEV.UserService.Api/.vs
 OEMEV.UserService.Api/OEMEV.UserService.Application/obj
+OEMEV.UserService.Api/OEMEV.UserService.DAL/bin
+OEMEV.UserService.Api/OEMEV.UserService.BLL/bin
+OEMEV.UserService.Api/OEMEV.UserService.Application/bin
