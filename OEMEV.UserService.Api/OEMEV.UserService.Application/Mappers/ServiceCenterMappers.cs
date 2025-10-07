@@ -30,6 +30,7 @@ namespace OEMEV.UserService.Application.Mappers
 				ContactPhone = serviceCenterDto.ContactPhone,
 				ContactEmail = serviceCenterDto.ContactEmail,
 				IsActive = serviceCenterDto.IsActive,
+				CreatedAt = serviceCenterDto.CreatedAt,
 				UpdatedAt = serviceCenterDto.UpdatedAt
 			};
 

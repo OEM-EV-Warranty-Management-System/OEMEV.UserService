@@ -24,6 +24,10 @@ namespace OEMEV.UserService.Application.Services
 					return Result<ServiceCenterDto>.Fail(error);
 				if (result <= 0)
 					return Result<ServiceCenterDto>.Fail("Failed to create Service Center.");
+				var (createdServiceCenter, errorMsg) = await _repo.GetServiceCenterByIdAsync(serviceCenter.Id);
+				if (errorMsg != null || createdServiceCenter == null)
+					return Result<ServiceCenterDto>.Fail("Failed to retrieve created Service Center.");
+				ServiceCenterDto = ServiceCenterMappers.ToDto(createdServiceCenter);
 				return Result<ServiceCenterDto>.Ok(ServiceCenterDto);
 			}
 			catch (Exception ex)
@@ -32,7 +36,7 @@ namespace OEMEV.UserService.Application.Services
 			}
 		}
 
-		public async Task<Result<int>> DeleteServiceCenterAsync(long id)
+		public async Task<Result<int>> HardDeleteServiceCenterAsync(long id)
 		{
 			try
 			{
@@ -66,7 +70,7 @@ namespace OEMEV.UserService.Application.Services
 			}
 		}
 
-		public async Task<Result<ServiceCenterDto>> GetServiceCenterByIdAsync(int id)
+		public async Task<Result<ServiceCenterDto>> GetServiceCenterByIdAsync(long id)
 		{
 			try
 			{
@@ -98,6 +102,24 @@ namespace OEMEV.UserService.Application.Services
 			catch (Exception ex)
 			{
 				return Result<ServiceCenterDto>.Fail($"ServiceCenterService.UpdateServiceCenterAsync: {ex.Message}");
+			}
+		}
+
+		public async Task<Result<int>> SetStatusAsync(ServiceCenterDto ServiceCenterDto)
+		{
+			try
+			{
+				var serviceCenter = ServiceCenterMappers.ToEntity(ServiceCenterDto);
+				serviceCenter.UpdatedAt = DateTime.UtcNow;
+				var (result, error) = await _repo.UpdateServiceCenterAsync(serviceCenter);
+				if (error != null)
+					return Result<int>.Fail(error);
+				if (result <= 0)
+					return Result<int>.Fail("Failed to soft delete Service Center.");
+				return Result<int>.Ok(result);
+			} catch (Exception ex)
+			{
+				return Result<int>.Fail($"ServiceCenterService.SoftDeleteServiceCenterAsync: {ex.Message}");
 			}
 		}
 	}

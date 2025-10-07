@@ -56,7 +56,7 @@ namespace OEMEV.UserService.Infrastructure.Repositories
 			}
 		}
 
-		public async Task<(ServiceCenter? ServiceCenter, string? Error)> GetServiceCenterByIdAsync(int id)
+		public async Task<(ServiceCenter? ServiceCenter, string? Error)> GetServiceCenterByIdAsync(long id)
 		{
 			try
 			{
