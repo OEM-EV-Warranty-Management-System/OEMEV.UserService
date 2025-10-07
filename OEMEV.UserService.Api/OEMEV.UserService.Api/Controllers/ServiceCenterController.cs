@@ -22,7 +22,7 @@ namespace OEMEV.UserService.Api.Controllers
 		}
 
 		[HttpGet("{id}")]
-		public async Task<IActionResult> GetById([FromRoute] int id)
+		public async Task<IActionResult> GetById([FromRoute] long id)
 		{
 			var result = await _serviceProviders.ServiceCenterService.GetServiceCenterByIdAsync(id);
 			if (!result.Success) return BadRequest(new { message = result.Error });
@@ -36,14 +36,17 @@ namespace OEMEV.UserService.Api.Controllers
 			if (!ModelState.IsValid) return BadRequest(ModelState);
 			var result = await _serviceProviders.ServiceCenterService.CreateServiceCenterAsync(dto);
 			if (!result.Success) return BadRequest(new { message = result.Error });
-			return CreatedAtAction(nameof(GetById), new { id = result.Data }, new { result = "Service center created successfully" });
+			return CreatedAtAction(nameof(GetById), new { id = result.Data.Id.Value }, new { result = "Service center created successfully" });
 		}
 
 		[HttpPut("update/{id}")]
 		public async Task<IActionResult> UpdateServiceCenter([FromRoute] long id,[FromBody] ServiceCenterDto dto)
 		{
-			if (id == null) return BadRequest(new { message = "Id can not null" });
 			if (!ModelState.IsValid) return BadRequest(ModelState);
+			var existingServiceCenter = await _serviceProviders.ServiceCenterService.GetServiceCenterByIdAsync(id);
+			if (!existingServiceCenter.Success) return BadRequest(new { message = existingServiceCenter.Error });
+			if (existingServiceCenter.Data == null) return NotFound(new { message = "Service center can not found." });
+
 			dto.Id = id;
 			var result = await _serviceProviders.ServiceCenterService.UpdateServiceCenterAsync(dto);
 			if (!result.Success) return BadRequest(new { message = result.Error });
@@ -51,11 +54,23 @@ namespace OEMEV.UserService.Api.Controllers
 		}
 
 		[HttpDelete("{id}")]
-		public async Task<IActionResult> Delete([FromRoute]long id)
+		public async Task<IActionResult> Delete([FromRoute] long id)
 		{
-			var result = await _serviceProviders.ServiceCenterService.DeleteServiceCenterAsync(id);
+			var result = await _serviceProviders.ServiceCenterService.HardDeleteServiceCenterAsync(id);
 			if (!result.Success) return BadRequest(new { message = result.Error });
-			return Ok(new { result = "Service center deleted successfully" });
+			return Ok(new { result = "Service center deleted successfully." });
+		}
+
+		[HttpPut("active-or-inactive/{id}")]
+		public async Task<IActionResult> SetStatus([FromRoute] long id, [FromQuery] bool status)
+		{
+			var serviceCenter = await _serviceProviders.ServiceCenterService.GetServiceCenterByIdAsync(id);
+			if (!serviceCenter.Success) return BadRequest(new { message = serviceCenter.Error });
+			if (serviceCenter.Data == null) return NotFound(new { message = "Service center can not found." });
+			serviceCenter.Data.IsActive = status;
+			var result = await _serviceProviders.ServiceCenterService.SetStatusAsync(serviceCenter.Data);
+			if (!result.Success) return BadRequest(new { message = result.Error });
+			return Ok(new { result = "Set status for service center successfully." });
 		}
 	}
 }
