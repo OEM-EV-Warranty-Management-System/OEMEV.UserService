@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OEMEV.UserService.Domain;
+using OEMEV.UserService.Domain.Models;
 
 namespace OEMEV.UserService.Infrastructure.DBContext;
 
@@ -13,6 +13,8 @@ public partial class AppDbContext : DbContext
         : base(options)
     {
     }
+
+    public virtual DbSet<Manufacture> Manufactures { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
 
@@ -38,36 +40,71 @@ public partial class AppDbContext : DbContext
             .HasPostgresExtension("graphql", "pg_graphql")
             .HasPostgresExtension("vault", "supabase_vault");
 
+        modelBuilder.Entity<Manufacture>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("manufactures_pkey");
+
+            entity.ToTable("manufactures", "iam_service");
+
+            entity.HasIndex(e => e.Id, "manufactures_id_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Address)
+                .HasColumnType("character varying")
+                .HasColumnName("address");
+            entity.Property(e => e.ContactEmail)
+                .HasColumnType("character varying")
+                .HasColumnName("contact_email");
+            entity.Property(e => e.ContactPhone)
+                .HasColumnType("character varying")
+                .HasColumnName("contact_phone");
+            entity.Property(e => e.Country)
+                .HasColumnType("character varying")
+                .HasColumnName("country");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(now() AT TIME ZONE 'utc'::text)")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
+            entity.Property(e => e.Name)
+                .HasColumnType("character varying")
+                .HasColumnName("name");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+            entity.Property(e => e.Website).HasColumnName("website");
+        });
+
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("roles_pkey");
 
-            entity.ToTable("roles");
+            entity.ToTable("roles", "iam_service");
 
             entity.HasIndex(e => e.Id, "roles_id_key").IsUnique();
 
-            entity.HasIndex(e => e.Name, "roles_name_key").IsUnique();
+            entity.HasIndex(e => e.Id, "roles_id_key1").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(now() AT TIME ZONE 'utc'::text)")
                 .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.Name)
                 .HasColumnType("character varying")
                 .HasColumnName("name");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
         });
 
         modelBuilder.Entity<ServiceCenter>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("service_centers_pkey");
 
-            entity.ToTable("service_centers");
-
-            entity.HasIndex(e => e.Address, "service_centers_address_key").IsUnique();
+            entity.ToTable("service_centers", "iam_service");
 
             entity.HasIndex(e => e.Id, "service_centers_id_key").IsUnique();
-
-            entity.HasIndex(e => e.Name, "service_centers_name_key").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id").UseIdentityByDefaultColumn();
             entity.Property(e => e.Address)
@@ -82,6 +119,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(now() AT TIME ZONE 'utc'::text)")
                 .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true)
                 .HasColumnName("is_active");
@@ -89,20 +127,19 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("character varying")
                 .HasColumnName("name");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("users_pkey");
 
-            entity.ToTable("users");
-
-            entity.HasIndex(e => e.Email, "users_email_key").IsUnique();
+            entity.ToTable("users", "iam_service");
 
             entity.HasIndex(e => e.UserName, "users_user_name_key").IsUnique();
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("gen_random_uuid()")
+                .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(now() AT TIME ZONE 'utc'::text)")
@@ -113,9 +150,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.FullName)
                 .HasColumnType("character varying")
                 .HasColumnName("full_name");
-            entity.Property(e => e.IsActive)
-                .HasDefaultValue(true)
-                .HasColumnName("is_active");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
             entity.Property(e => e.ManufacturerId).HasColumnName("manufacturer_id");
             entity.Property(e => e.PasswordHash)
                 .HasColumnType("character varying")
@@ -130,6 +165,11 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("character varying")
                 .HasColumnName("user_name");
 
+            entity.HasOne(d => d.Manufacturer).WithMany(p => p.Users)
+                .HasForeignKey(d => d.ManufacturerId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("users_manufacturer_id_fkey");
+
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .HasConstraintName("users_role_id_fkey");
@@ -139,7 +179,6 @@ public partial class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("users_service_center_id_fkey");
         });
-        modelBuilder.HasSequence<int>("seq_schema_version", "graphql").IsCyclic();
 
         OnModelCreatingPartial(modelBuilder);
     }

@@ -1,13 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace OEMEV.UserService.Domain;
+﻿namespace OEMEV.UserService.Domain.Models;
 
 public partial class ServiceCenter
 {
-	[Key]
-	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-	public long Id { get; set; }
+    public long Id { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -22,6 +17,10 @@ public partial class ServiceCenter
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public string CreatedBy { get; set; } = null!;
+
+    public string? UpdatedBy { get; set; }
 
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

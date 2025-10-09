@@ -1,5 +1,5 @@
 ﻿using OEMEV.UserService.Application.Dtos;
-using OEMEV.UserService.Domain;
+using OEMEV.UserService.Domain.Models;
 
 namespace OEMEV.UserService.Application.Mappers
 {

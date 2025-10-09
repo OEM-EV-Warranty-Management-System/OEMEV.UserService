@@ -1,4 +1,4 @@
-﻿namespace OEMEV.UserService.Domain;
+﻿namespace OEMEV.UserService.Domain.Models;
 
 public partial class Role
 {
@@ -7,6 +7,12 @@ public partial class Role
     public string Name { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public string CreatedBy { get; set; } = null!;
+
+    public string? UpdatedBy { get; set; }
 
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

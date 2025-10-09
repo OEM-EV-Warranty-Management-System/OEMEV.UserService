@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace OEMEV.UserService.Domain;
+﻿namespace OEMEV.UserService.Domain.Models;
 
 public partial class User
 {
@@ -28,6 +25,8 @@ public partial class User
     public bool IsActive { get; set; }
 
     public long? ManufacturerId { get; set; }
+
+    public virtual Manufacture? Manufacturer { get; set; }
 
     public virtual Role Role { get; set; } = null!;
 

@@ -1,4 +1,4 @@
-﻿using OEMEV.UserService.Domain;
+﻿using OEMEV.UserService.Domain.Models;
 
 namespace OEMEV.UserService.Infrastructure.Interfaces
 {
