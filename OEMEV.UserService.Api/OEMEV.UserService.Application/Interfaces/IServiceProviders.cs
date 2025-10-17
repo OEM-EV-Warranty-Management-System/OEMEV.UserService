@@ -5,5 +5,7 @@
 		IUserService UserService { get; }
 
 		IServiceCenterService ServiceCenterService { get; }
+
+		IManufactureService ManufactureService { get; }
 	}
 }
