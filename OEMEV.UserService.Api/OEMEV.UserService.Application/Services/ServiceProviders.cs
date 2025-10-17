@@ -6,12 +6,15 @@ namespace OEMEV.UserService.Application.Services
 	{
 		public IUserService UserService { get; }
 
-		public IServiceCenterService ServiceCenterService { get;  }
+		public IServiceCenterService ServiceCenterService { get; }
 
-		public ServiceProviders(IUserService userService, IServiceCenterService serviceCenterService)
+		public IManufactureService ManufactureService { get; set; }
+
+		public ServiceProviders(IUserService userService, IServiceCenterService serviceCenterService, IManufactureService manufactureService)
 		{
 			UserService = userService;
 			ServiceCenterService = serviceCenterService;
+			ManufactureService = manufactureService;
 		}
 	}
 }

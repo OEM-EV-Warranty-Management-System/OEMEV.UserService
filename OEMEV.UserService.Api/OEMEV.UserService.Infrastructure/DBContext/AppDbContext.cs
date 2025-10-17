@@ -48,7 +48,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Id, "manufactures_id_key").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Id).HasColumnName("id").UseIdentityByDefaultColumn();
             entity.Property(e => e.Address)
                 .HasColumnType("character varying")
                 .HasColumnName("address");

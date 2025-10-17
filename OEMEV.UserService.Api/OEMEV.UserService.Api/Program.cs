@@ -79,10 +79,12 @@ builder.Services.AddAuthentication(options =>
 #region Dependency Injection (DI)
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IServiceCenterRepository, ServiceCenterRepository>();
+builder.Services.AddScoped<IManufactureRepository, ManufactureRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IServiceProviders, ServiceProviders>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IServiceCenterService, ServiceCenterService>();
+builder.Services.AddScoped<IManufactureService, ManufactureService>();
 #endregion
 
 #region Swagger Setup
