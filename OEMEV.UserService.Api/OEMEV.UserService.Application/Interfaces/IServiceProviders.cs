@@ -7,5 +7,7 @@
 		IServiceCenterService ServiceCenterService { get; }
 
 		IManufactureService ManufactureService { get; }
+
+		IRoleService RoleService { get; }
 	}
 }

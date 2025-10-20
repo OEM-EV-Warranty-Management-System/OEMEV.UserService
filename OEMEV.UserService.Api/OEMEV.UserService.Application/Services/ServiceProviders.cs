@@ -8,13 +8,20 @@ namespace OEMEV.UserService.Application.Services
 
 		public IServiceCenterService ServiceCenterService { get; }
 
-		public IManufactureService ManufactureService { get; set; }
+		public IManufactureService ManufactureService { get; }
 
-		public ServiceProviders(IUserService userService, IServiceCenterService serviceCenterService, IManufactureService manufactureService)
+		public IRoleService RoleService { get; }
+
+		public ServiceProviders(
+			IUserService userService,
+			IServiceCenterService serviceCenterService,
+			IManufactureService manufactureService,
+			IRoleService roleService)
 		{
 			UserService = userService;
 			ServiceCenterService = serviceCenterService;
 			ManufactureService = manufactureService;
+			RoleService = roleService;
 		}
 	}
 }
