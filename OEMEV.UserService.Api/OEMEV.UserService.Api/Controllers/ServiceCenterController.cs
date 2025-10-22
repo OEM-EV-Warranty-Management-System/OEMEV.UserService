@@ -117,5 +117,33 @@ namespace OEMEV.UserService.Api.Controllers
 			}
 			return Ok(new { message = "Service center deleted successfully." });
 		}
+
+		[HttpPatch("{id}/deactivate")]
+		public async Task<IActionResult> Deactivate([FromRoute] long id, bool status)
+		{
+			var serviceCenterDto = await _serviceProviders.ServiceCenterService.GetByIdAsync(id);
+			if (!serviceCenterDto.Success)
+			{
+				if (serviceCenterDto.Error != null && serviceCenterDto.Error.Contains("not found"))
+				{
+					return NotFound(new { message = serviceCenterDto.Error });
+				}
+				return BadRequest(new { message = serviceCenterDto.Error });
+			}
+
+			var userName = this.User?.Identity?.Name;
+			if (string.IsNullOrEmpty(userName))
+			{
+				return Unauthorized(new { message = "User is not authenticated." });
+			}
+
+			serviceCenterDto.Data!.UpdatedBy = userName;
+			var result = await _serviceProviders.ServiceCenterService.UpdateAsync(serviceCenterDto.Data);
+			if (!result.Success)
+			{
+				return BadRequest(new { message = result.Error });
+			}
+			return Ok(result.Data);
+		}
 	}
 }

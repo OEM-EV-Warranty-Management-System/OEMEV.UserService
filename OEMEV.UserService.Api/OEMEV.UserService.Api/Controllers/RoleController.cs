@@ -118,5 +118,33 @@ namespace OEMEV.UserService.Api.Controllers
 			}
 			return Ok(new { message = "Role deleted successfully." });
 		}
+
+		[HttpPatch("{id}/deactivate")]
+		public async Task<IActionResult> Deactivate([FromRoute] long id, bool status)
+		{
+			var roleDto = await _serviceProviders.RoleService.GetByIdAsync(id);
+			if (!roleDto.Success)
+			{
+				if (roleDto.Error != null && roleDto.Error.Contains("not found"))
+				{
+					return NotFound(new { message = roleDto.Error });
+				}
+				return BadRequest(new { message = roleDto.Error });
+			}
+
+			var userName = this.User?.Identity?.Name;
+			if (string.IsNullOrEmpty(userName))
+			{
+				return Unauthorized(new { message = "User is not authenticated." });
+			}
+
+			roleDto.Data!.UpdatedBy = userName;
+			var result = await _serviceProviders.RoleService.UpdateAsync(roleDto.Data);
+			if (!result.Success)
+			{
+				return BadRequest(new { message = result.Error });
+			}
+			return Ok(result.Data);
+		}
 	}
 }
