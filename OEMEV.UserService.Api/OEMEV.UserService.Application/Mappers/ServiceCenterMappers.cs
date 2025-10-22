@@ -16,7 +16,9 @@ namespace OEMEV.UserService.Application.Mappers
 				ContactEmail = serviceCenter.ContactEmail,
 				IsActive = serviceCenter.IsActive,
 				CreatedAt = serviceCenter.CreatedAt,
-				UpdatedAt = serviceCenter.UpdatedAt ?? null,
+				UpdatedAt = serviceCenter.UpdatedAt,
+				CreatedBy = serviceCenter.CreatedBy,
+				UpdatedBy = serviceCenter.UpdatedBy
 			};
 		}
 
@@ -31,14 +33,16 @@ namespace OEMEV.UserService.Application.Mappers
 				ContactEmail = serviceCenterDto.ContactEmail,
 				IsActive = serviceCenterDto.IsActive,
 				CreatedAt = serviceCenterDto.CreatedAt,
-				UpdatedAt = serviceCenterDto.UpdatedAt
+				UpdatedAt = serviceCenterDto.UpdatedAt,
+				CreatedBy = serviceCenterDto.CreatedBy,
+				UpdatedBy = serviceCenterDto.UpdatedBy
 			};
 
 			if (serviceCenterDto.Id.HasValue && serviceCenterDto.Id.Value > 0)
 				entity.Id = serviceCenterDto.Id.Value;
 
-			
-				return entity;
+
+			return entity;
 		}
 	}
 }

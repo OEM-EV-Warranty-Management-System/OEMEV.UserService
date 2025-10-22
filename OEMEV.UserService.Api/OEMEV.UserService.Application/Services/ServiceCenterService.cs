@@ -13,52 +13,54 @@ namespace OEMEV.UserService.Application.Services
 			_repo = repo;
 		}
 
-		public async Task<Result<ServiceCenterDto>> CreateServiceCenterAsync(ServiceCenterDto ServiceCenterDto)
+		public async Task<Result<ServiceCenterDto>> CreateAsync(ServiceCenterDto serviceCenterDto)
 		{
 			try
 			{
-				var serviceCenter = ServiceCenterMappers.ToEntity(ServiceCenterDto);
+				var serviceCenter = ServiceCenterMappers.ToEntity(serviceCenterDto);
 				serviceCenter.CreatedAt = DateTime.UtcNow;
-				var (result, error) = await _repo.AddServiceCenterAsync(serviceCenter);
-				if (error != null)
-					return Result<ServiceCenterDto>.Fail(error);
-				if (result <= 0)
-					return Result<ServiceCenterDto>.Fail("Failed to create Service Center.");
-				var (createdServiceCenter, errorMsg) = await _repo.GetServiceCenterByIdAsync(serviceCenter.Id);
-				if (errorMsg != null || createdServiceCenter == null)
-					return Result<ServiceCenterDto>.Fail("Failed to retrieve created Service Center.");
-				ServiceCenterDto = ServiceCenterMappers.ToDto(createdServiceCenter);
-				return Result<ServiceCenterDto>.Ok(ServiceCenterDto);
+				var (result, error) = await _repo.CreateAsync(serviceCenter);
+				if (error != null || result == null)
+					return Result<ServiceCenterDto>.Fail(error ?? "Failed to create service center.");
+				return Result<ServiceCenterDto>.Ok(ServiceCenterMappers.ToDto(result));
 			}
 			catch (Exception ex)
 			{
-				return Result<ServiceCenterDto>.Fail($"ServiceCenterService.CreateServiceCenterAsync: {ex.Message}");
+				return Result<ServiceCenterDto>.Fail($"ServiceCenterService.CreateAsync: {ex.Message}");
 			}
 		}
 
-		public async Task<Result<int>> HardDeleteServiceCenterAsync(long id)
+		public async Task<Result<int>> DeleteAsync(long id, string updatedBy)
 		{
 			try
 			{
-				var (deleteResult, deleteError) = await _repo.DeleteServiceCenterAsync(id);
-				if (deleteError != null)
-					return Result<int>.Fail(deleteError);
-				if (deleteResult <= 0)
-					return Result<int>.Fail("Failed to delete Service Center.");
-				return Result<int>.Ok(deleteResult);
+				var (serviceCenter, errorMsg) = await _repo.GetByIdAsync(id);
+				if (errorMsg != null)
+					return Result<int>.Fail(errorMsg);
+				if (serviceCenter == null)
+					return Result<int>.Fail("Service center not found!");
+
+				serviceCenter.IsActive = false;
+				serviceCenter.UpdatedAt = DateTime.UtcNow;
+				serviceCenter.UpdatedBy = updatedBy;
+
+				var (updatedServiceCenterResult, updateError) = await _repo.UpdateAsync(serviceCenter);
+				if (updateError != null)
+					return Result<int>.Fail(updateError);
+
+				return Result<int>.Ok(updatedServiceCenterResult != null ? 1 : 0);
 			}
 			catch (Exception ex)
 			{
-				return Result<int>.Fail($"ServiceCenterService.DeleteServiceCenterAsync: {ex.Message}");
+				return Result<int>.Fail($"ServiceCenterService.DeleteAsync: {ex.Message}");
 			}
-
 		}
 
-		public async Task<Result<List<ServiceCenterDto>>> GetAllServiceCentersAsync()
+		public async Task<Result<List<ServiceCenterDto>>> GetAllAsync()
 		{
 			try
 			{
-				var (serviceCenters, error) = await _repo.GetAllServiceCentersAsync();
+				var (serviceCenters, error) = await _repo.GetAllAsync();
 				if (error != null)
 					return Result<List<ServiceCenterDto>>.Fail(error);
 				var serviceCenterDtos = serviceCenters.Select(ServiceCenterMappers.ToDto).ToList();
@@ -66,60 +68,50 @@ namespace OEMEV.UserService.Application.Services
 			}
 			catch (Exception ex)
 			{
-				return Result<List<ServiceCenterDto>>.Fail($"ServiceCenterService.GetAllServiceCentersAsync: {ex.Message}");
+				return Result<List<ServiceCenterDto>>.Fail($"ServiceCenterService.GetAllAsync: {ex.Message}");
 			}
 		}
 
-		public async Task<Result<ServiceCenterDto>> GetServiceCenterByIdAsync(long id)
+		public async Task<Result<ServiceCenterDto>> GetByIdAsync(long id)
 		{
 			try
 			{
-				var (serviceCenter, error) = await _repo.GetServiceCenterByIdAsync(id);
-				if (serviceCenter == null)
-					return Result<ServiceCenterDto>.Fail("Service Center not found.");
-				var serviceCenterDto = ServiceCenterMappers.ToDto(serviceCenter);
-				return Result<ServiceCenterDto>.Ok(serviceCenterDto);
-			}
-			catch (Exception ex)
-			{
-				return Result<ServiceCenterDto>.Fail($"ServiceCenterService.GetServiceCenterByIdAsync: {ex.Message}");
-			}
-		}
-
-		public async Task<Result<ServiceCenterDto>> UpdateServiceCenterAsync(ServiceCenterDto ServiceCenterDto)
-		{
-			try
-			{
-				var serviceCenter = ServiceCenterMappers.ToEntity(ServiceCenterDto);
-				serviceCenter.UpdatedAt = DateTime.UtcNow;
-				var (result, error) = await _repo.UpdateServiceCenterAsync(serviceCenter);
+				var (serviceCenter, error) = await _repo.GetByIdAsync(id);
 				if (error != null)
 					return Result<ServiceCenterDto>.Fail(error);
-				if (result <= 0)
-					return Result<ServiceCenterDto>.Fail("Failed to update Service Center.");
-				return Result<ServiceCenterDto>.Ok(ServiceCenterDto);
+				if (serviceCenter == null)
+					return Result<ServiceCenterDto>.Fail("Service center not found!");
+				return Result<ServiceCenterDto>.Ok(ServiceCenterMappers.ToDto(serviceCenter));
 			}
 			catch (Exception ex)
 			{
-				return Result<ServiceCenterDto>.Fail($"ServiceCenterService.UpdateServiceCenterAsync: {ex.Message}");
+				return Result<ServiceCenterDto>.Fail($"ServiceCenterService.GetByIdAsync: {ex.Message}");
 			}
 		}
 
-		public async Task<Result<int>> SetStatusAsync(ServiceCenterDto ServiceCenterDto)
+		public async Task<Result<ServiceCenterDto>> UpdateAsync(ServiceCenterDto serviceCenterDto)
 		{
 			try
 			{
-				var serviceCenter = ServiceCenterMappers.ToEntity(ServiceCenterDto);
+				var (serviceCenterCheck, errorMsg) = await _repo.GetByIdAsync(serviceCenterDto.Id.Value);
+				if (errorMsg != null)
+					return Result<ServiceCenterDto>.Fail(errorMsg);
+				if (serviceCenterCheck == null)
+					return Result<ServiceCenterDto>.Fail("Service center not found!");
+
+				var serviceCenter = ServiceCenterMappers.ToEntity(serviceCenterDto);
+				serviceCenter.CreatedAt = serviceCenterCheck.CreatedAt;
+				serviceCenter.CreatedBy = serviceCenterCheck.CreatedBy;
 				serviceCenter.UpdatedAt = DateTime.UtcNow;
-				var (result, error) = await _repo.UpdateServiceCenterAsync(serviceCenter);
-				if (error != null)
-					return Result<int>.Fail(error);
-				if (result <= 0)
-					return Result<int>.Fail("Failed to soft delete Service Center.");
-				return Result<int>.Ok(result);
-			} catch (Exception ex)
+
+				var (result, error) = await _repo.UpdateAsync(serviceCenter);
+				if (error != null || result == null)
+					return Result<ServiceCenterDto>.Fail(error ?? "Failed to update service center.");
+				return Result<ServiceCenterDto>.Ok(ServiceCenterMappers.ToDto(result));
+			}
+			catch (Exception ex)
 			{
-				return Result<int>.Fail($"ServiceCenterService.SoftDeleteServiceCenterAsync: {ex.Message}");
+				return Result<ServiceCenterDto>.Fail($"ServiceCenterService.UpdateAsync: {ex.Message}");
 			}
 		}
 	}
