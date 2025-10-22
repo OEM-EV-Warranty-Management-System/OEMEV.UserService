@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OEMEV.UserService.Application.Dtos;
 using OEMEV.UserService.Application.Interfaces;
 
 namespace OEMEV.UserService.Api.Controllers
 {
+	[Authorize(Roles = "1")]
 	[Route("api/[controller]")]
 	[ApiController]
 	public class ServiceCenterController : ControllerBase
@@ -13,64 +15,107 @@ namespace OEMEV.UserService.Api.Controllers
 		{
 			_serviceProviders = serviceProviders;
 		}
-		[HttpGet("get-all")]
-		public async Task<IActionResult> GetAllServiceCenter()
+
+		[HttpGet]
+		public async Task<IActionResult> GetAll()
 		{
-			var result = await _serviceProviders.ServiceCenterService.GetAllServiceCentersAsync();
-			if (!result.Success) return BadRequest(new { message = result.Error });
+			var result = await _serviceProviders.ServiceCenterService.GetAllAsync();
+			if (!result.Success)
+			{
+				return BadRequest(new { message = result.Error });
+			}
 			return Ok(result.Data);
 		}
 
 		[HttpGet("{id}")]
-		public async Task<IActionResult> GetById([FromRoute] long id)
+		public async Task<IActionResult> GetById(long id)
 		{
-			var result = await _serviceProviders.ServiceCenterService.GetServiceCenterByIdAsync(id);
-			if (!result.Success) return BadRequest(new { message = result.Error });
-			if(result.Data == null) return NotFound(new { message = "Service center can not found." });
+			var result = await _serviceProviders.ServiceCenterService.GetByIdAsync(id);
+			if (!result.Success)
+			{
+				if (result.Error != null && result.Error.Contains("not found"))
+				{
+					return NotFound(new { message = result.Error });
+				}
+				return BadRequest(new { message = result.Error });
+			}
 			return Ok(result.Data);
 		}
 
-		[HttpPost("create")]
-		public async Task<IActionResult> CreateServiceCenter([FromBody] ServiceCenterDto dto)
+		[HttpPost]
+		public async Task<IActionResult> Create([FromBody] ServiceCenterDto serviceCenterDto)
 		{
-			if (!ModelState.IsValid) return BadRequest(ModelState);
-			var result = await _serviceProviders.ServiceCenterService.CreateServiceCenterAsync(dto);
-			if (!result.Success) return BadRequest(new { message = result.Error });
-			return CreatedAtAction(nameof(GetById), new { id = result.Data.Id.Value }, new { result = "Service center created successfully" });
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+
+			var userName = this.User.Identity?.Name;
+			if (string.IsNullOrEmpty(userName))
+			{
+				return Unauthorized(new { message = "User is not authenticated." });
+			}
+
+			serviceCenterDto.CreatedBy = userName;
+
+			var result = await _serviceProviders.ServiceCenterService.CreateAsync(serviceCenterDto);
+
+			if (!result.Success)
+			{
+				return BadRequest(new { message = result.Error });
+			}
+
+			return CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data);
 		}
 
-		[HttpPut("update/{id}")]
-		public async Task<IActionResult> UpdateServiceCenter([FromRoute] long id,[FromBody] ServiceCenterDto dto)
+		[HttpPut("{id}")]
+		public async Task<IActionResult> Update([FromRoute] long id, [FromBody] ServiceCenterDto serviceCenterDto)
 		{
-			if (!ModelState.IsValid) return BadRequest(ModelState);
-			var existingServiceCenter = await _serviceProviders.ServiceCenterService.GetServiceCenterByIdAsync(id);
-			if (!existingServiceCenter.Success) return BadRequest(new { message = existingServiceCenter.Error });
-			if (existingServiceCenter.Data == null) return NotFound(new { message = "Service center can not found." });
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
 
-			dto.Id = id;
-			var result = await _serviceProviders.ServiceCenterService.UpdateServiceCenterAsync(dto);
-			if (!result.Success) return BadRequest(new { message = result.Error });
-			return Ok(new { result = "Service center updated successfully" });
+			var userName = this.User?.Identity?.Name;
+			if (string.IsNullOrEmpty(userName))
+			{
+				return Unauthorized(new { message = "User is not authenticated." });
+			}
+
+			serviceCenterDto.Id = id;
+			serviceCenterDto.UpdatedBy = userName;
+
+			var result = await _serviceProviders.ServiceCenterService.UpdateAsync(serviceCenterDto);
+			if (!result.Success)
+			{
+				if (result.Error != null && result.Error.Contains("not found"))
+				{
+					return NotFound(new { message = result.Error });
+				}
+				return BadRequest(new { message = result.Error });
+			}
+			return Ok(result.Data);
 		}
 
 		[HttpDelete("{id}")]
 		public async Task<IActionResult> Delete([FromRoute] long id)
 		{
-			var result = await _serviceProviders.ServiceCenterService.HardDeleteServiceCenterAsync(id);
-			if (!result.Success) return BadRequest(new { message = result.Error });
-			return Ok(new { result = "Service center deleted successfully." });
-		}
+			var userName = this.User?.Identity?.Name;
+			if (string.IsNullOrEmpty(userName))
+			{
+				return Unauthorized(new { message = "User is not authenticated." });
+			}
 
-		[HttpPut("active-or-inactive/{id}")]
-		public async Task<IActionResult> SetStatus([FromRoute] long id, [FromQuery] bool status)
-		{
-			var serviceCenter = await _serviceProviders.ServiceCenterService.GetServiceCenterByIdAsync(id);
-			if (!serviceCenter.Success) return BadRequest(new { message = serviceCenter.Error });
-			if (serviceCenter.Data == null) return NotFound(new { message = "Service center can not found." });
-			serviceCenter.Data.IsActive = status;
-			var result = await _serviceProviders.ServiceCenterService.SetStatusAsync(serviceCenter.Data);
-			if (!result.Success) return BadRequest(new { message = result.Error });
-			return Ok(new { result = "Set status for service center successfully." });
+			var result = await _serviceProviders.ServiceCenterService.DeleteAsync(id, userName);
+			if (!result.Success)
+			{
+				if (result.Error != null && result.Error.Contains("not found"))
+				{
+					return NotFound(new { message = result.Error });
+				}
+				return BadRequest(new { message = result.Error });
+			}
+			return Ok(new { message = "Service center deleted successfully." });
 		}
 	}
 }

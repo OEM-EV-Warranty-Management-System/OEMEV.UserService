@@ -26,6 +26,12 @@ namespace OEMEV.UserService.Application.Dtos
 		public DateTime CreatedAt { get; set; }
 
 		[SwaggerSchema(ReadOnly = true)]
-		public DateTime? UpdatedAt { get; set; }	
+		public DateTime? UpdatedAt { get; set; }
+
+		[SwaggerSchema(ReadOnly = true)]
+		public string CreatedBy { get; set; } = string.Empty;
+
+		[SwaggerSchema(ReadOnly = true)]
+		public string? UpdatedBy { get; set; }
 	}
 }

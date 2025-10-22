@@ -4,11 +4,10 @@ namespace OEMEV.UserService.Application.Interfaces
 {
 	public interface IServiceCenterService
 	{
-		Task<Result<ServiceCenterDto>> GetServiceCenterByIdAsync(long id);
-		Task<Result<List<ServiceCenterDto>>> GetAllServiceCentersAsync();
-		Task<Result<ServiceCenterDto>> CreateServiceCenterAsync(ServiceCenterDto ServiceCenterDto);
-		Task<Result<ServiceCenterDto>> UpdateServiceCenterAsync(ServiceCenterDto ServiceCenterDto);
-		Task<Result<int>> HardDeleteServiceCenterAsync(long id);
-		Task<Result<int>> SetStatusAsync(ServiceCenterDto ServiceCenterDto);
+		Task<Result<List<ServiceCenterDto>>> GetAllAsync();
+		Task<Result<ServiceCenterDto>> GetByIdAsync(long id);
+		Task<Result<ServiceCenterDto>> CreateAsync(ServiceCenterDto serviceCenterDto);
+		Task<Result<ServiceCenterDto>> UpdateAsync(ServiceCenterDto serviceCenterDto);
+		Task<Result<int>> DeleteAsync(long id, string updatedBy);
 	}
 }
