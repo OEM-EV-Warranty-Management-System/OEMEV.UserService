@@ -109,14 +109,14 @@ namespace OEMEV.UserService.Api.Controllers
 		[HttpPatch("{id}/deactivate")]
 		public async Task<IActionResult> Deactivate([FromRoute] long id, bool status)
 		{
-			var ManufactureDto = await _serviceProviders.ManufactureService.GetByIdAsync(id);
-			if (!ManufactureDto.Success)
+			var manufactureDto = await _serviceProviders.ManufactureService.GetByIdAsync(id);
+			if (!manufactureDto.Success)
 			{
-				if (ManufactureDto.Error != null && ManufactureDto.Error.Contains("not found"))
+				if (manufactureDto.Error != null && manufactureDto.Error.Contains("not found"))
 				{
-					return NotFound(new { message = ManufactureDto.Error });
+					return NotFound(new { message = manufactureDto.Error });
 				}
-				return BadRequest(new { message = ManufactureDto.Error });
+				return BadRequest(new { message = manufactureDto.Error });
 			}
 
 			var userName = this.User?.Identity?.Name;
@@ -125,8 +125,8 @@ namespace OEMEV.UserService.Api.Controllers
 				return Unauthorized(new { message = "User is not authenticated." });
 			}
 
-			ManufactureDto.Data!.UpdatedBy = userName;
-			var result = await _serviceProviders.ManufactureService.UpdateAsync(ManufactureDto.Data);
+			manufactureDto.Data!.UpdatedBy = userName;
+			var result = await _serviceProviders.ManufactureService.UpdateAsync(manufactureDto.Data);
 			if (!result.Success)
 			{
 				return BadRequest(new { message = result.Error });
