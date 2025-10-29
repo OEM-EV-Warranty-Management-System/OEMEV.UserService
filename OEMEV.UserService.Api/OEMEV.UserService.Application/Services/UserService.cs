@@ -20,26 +20,47 @@ namespace OEMEV.UserService.Application.Services
 				?? throw new ArgumentNullException(nameof(jwtSettings), "JWT settings is not configured.");
 		}
 
-		public async Task<Result<int>> AddUserAsync(UserDto userDto)
+		public async Task<Result<UserDto>> AddUserAsync(UserDto userDto)
 		{
 			try
 			{
 				var user = UserMappers.ToEntity(userDto);
-				user.PasswordHash = BCrypt.Net.BCrypt.HashPassword("@1");
+				if(userDto.RoleId != 5)
+				{
+					user.PasswordHash = BCrypt.Net.BCrypt.HashPassword("@1");
+				}
 
 				var (result, error) = await _repo.AddAsync(user);
 
-				if (error != null)
-					return Result<int>.Fail(error);
+				if (error != null || result == null)
+					return Result<UserDto>.Fail(error ?? "Can not save this user!");
 
-				if (result == 0)
-					return Result<int>.Fail("Can not save this user!");
-
-				return Result<int>.Ok(result);
+				return Result<UserDto>.Ok(UserMappers.ToDto(result));
 			}
 			catch (Exception ex)
 			{
-				return Result<int>.Fail($"UserService.AddUserAsync error: {ex.Message}");
+				return Result<UserDto>.Fail($"UserService.AddUserAsync error: {ex.Message}");
+			}
+		}
+
+		public async Task<Result<int>> DeleteUserAsync(Guid id)
+		{
+			try
+			{
+				var (user, error) = await _repo.GetByIdAsync(id);
+				if (error != null) return Result<int>.Fail(error);
+				if (user == null) return Result<int>.Fail("User not found.");
+
+				user.IsActive = false;
+				var (updatedUser, updateError) = await _repo.UpdateAsync(user);
+
+				if (updateError != null) return Result<int>.Fail(updateError);
+
+				return Result<int>.Ok(1);
+			}
+			catch (Exception ex)
+			{
+				return Result<int>.Fail($"UserService.DeleteUserAsync error: {ex.Message}");
 			}
 		}
 
@@ -60,6 +81,22 @@ namespace OEMEV.UserService.Application.Services
 			}
 		}
 
+		public async Task<Result<UserDto>> GetUserByIdAsync(Guid id)
+		{
+			try
+			{
+				var (user, error) = await _repo.GetByIdAsync(id);
+				if (error != null) return Result<UserDto>.Fail(error);
+				if (user == null) return Result<UserDto>.Fail("User not found.");
+
+				return Result<UserDto>.Ok(UserMappers.ToDto(user));
+			}
+			catch (Exception ex)
+			{
+				return Result<UserDto>.Fail($"UserService.GetUserByIdAsync error: {ex.Message}");
+			}
+		}
+
 		public async Task<Result<LoginResponseDto>> LoginAsync(LoginRequestDto loginRequestDto)
 		{
 			try
@@ -68,7 +105,7 @@ namespace OEMEV.UserService.Application.Services
 				if (error != null)
 					return Result<LoginResponseDto>.Fail(error);
 
-				if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
+				if (user == null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
 					return Result<LoginResponseDto>.Fail("Incorrect username or password!");
 
 				var accessToken = Authentication.CreateAccessToken(user, _jwtSettings);
@@ -82,7 +119,7 @@ namespace OEMEV.UserService.Application.Services
 				user.RefreshToken = refreshToken.token!;
 				var (updateResult, updateError) = await _repo.UpdateAsync(user);
 
-				if (updateError != null || updateResult == 0)
+				if (updateError != null || updateResult == null)
 					return Result<LoginResponseDto>.Fail(updateError ?? "Could not update refresh token!");
 
 				var response = new LoginResponseDto
@@ -97,6 +134,35 @@ namespace OEMEV.UserService.Application.Services
 			catch (Exception ex)
 			{
 				return Result<LoginResponseDto>.Fail($"UserService.LoginAsync error: {ex.Message}");
+			}
+		}
+
+		public async Task<Result<UserDto>> UpdateUserAsync(UserDto userDto)
+		{
+			try
+			{
+				var (userToUpdate, error) = await _repo.GetByIdAsync(userDto.Id.Value);
+				if (error != null) return Result<UserDto>.Fail(error);
+				if (userToUpdate == null) return Result<UserDto>.Fail("User not found.");
+
+				userToUpdate.FullName = userDto.FullName;
+				userToUpdate.PhoneNumber = userDto.PhoneNumber;
+				userToUpdate.Email = userDto.Email;
+				userToUpdate.RoleId = userDto.RoleId;
+				userToUpdate.ServiceCenterId = userDto.ServiceCenterId;
+
+
+				var (updatedUser, updateError) = await _repo.UpdateAsync(userToUpdate);
+				if (updateError != null || updatedUser == null)
+				{
+					return Result<UserDto>.Fail(updateError ?? "Failed to update user.");
+				}
+
+				return Result<UserDto>.Ok(UserMappers.ToDto(updatedUser));
+			}
+			catch (Exception ex)
+			{
+				return Result<UserDto>.Fail($"UserService.UpdateUserAsync error: {ex.Message}");
 			}
 		}
 	}
