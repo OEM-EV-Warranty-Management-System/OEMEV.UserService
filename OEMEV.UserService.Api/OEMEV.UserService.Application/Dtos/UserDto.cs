@@ -7,9 +7,7 @@ namespace OEMEV.UserService.Application.Dtos
 	{
 		[SwaggerSchema(ReadOnly = true)]
 		public Guid? Id { get; set; }
-		[Required(ErrorMessage = "User name is required!")]
-		public string UserName { get; set; } = null!;
-		[Required(ErrorMessage = "Full name is required!")]
+		public string? UserName { get; set; }
 		public string FullName { get; set; } = null!;
 		[Phone]
 		public string? PhoneNumber { get; set; }
@@ -18,5 +16,7 @@ namespace OEMEV.UserService.Application.Dtos
 		[Required]
 		public long RoleId { get; set; }
 		public long? ServiceCenterId { get; set; }
+		public long? ManufacturerId { get; set; }
+		public bool IsActive { get; set; }
 	}
 }

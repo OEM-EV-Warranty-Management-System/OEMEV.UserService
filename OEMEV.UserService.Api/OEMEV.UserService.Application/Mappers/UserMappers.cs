@@ -10,12 +10,14 @@ namespace OEMEV.UserService.Application.Mappers
 			return new UserDto()
 			{
 				Id = user.Id,
-				UserName = user.UserName,
+				UserName = user.UserName ?? string.Empty,
 				FullName = user.FullName ?? string.Empty,
 				PhoneNumber = user.PhoneNumber,
 				Email = user.Email,
 				RoleId = user.RoleId,
-				ServiceCenterId = user.ServiceCenterId ?? null
+				ServiceCenterId = user.ServiceCenterId ?? null,
+				ManufacturerId = user.ManufacturerId ?? null,
+				IsActive = user.IsActive,
 			};
 		}
 
@@ -24,12 +26,14 @@ namespace OEMEV.UserService.Application.Mappers
 			return new User()
 			{
 				Id = dto.Id ?? Guid.Empty,
-				UserName = dto.UserName,
+				UserName = dto.UserName ?? string.Empty,
 				FullName = dto.FullName ?? string.Empty,
 				PhoneNumber = dto.PhoneNumber,
 				Email = dto.Email,
 				RoleId = dto.RoleId,
-				ServiceCenterId = dto.ServiceCenterId ?? null
+				ServiceCenterId = dto.ServiceCenterId ?? null,
+				ManufacturerId = dto.ManufacturerId ?? null,
+				IsActive= dto.IsActive,
 			};
 		}
 	}
