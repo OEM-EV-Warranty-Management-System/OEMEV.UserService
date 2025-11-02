@@ -5,6 +5,7 @@ using OEMEV.UserService.Application.Mappers;
 using OEMEV.UserService.Infrastructure.Base;
 using OEMEV.UserService.Infrastructure.Interfaces;
 using OEMEV.UserService.Infrastructure.Libraries;
+using System.Security.Claims;
 
 namespace OEMEV.UserService.Application.Services
 {
@@ -163,6 +164,95 @@ namespace OEMEV.UserService.Application.Services
 			catch (Exception ex)
 			{
 				return Result<UserDto>.Fail($"UserService.UpdateUserAsync error: {ex.Message}");
+			}
+		}
+
+		public async Task<Result<LoginResponseDto>> RefreshTokenAsync(RefreshTokenRequestDto refreshTokenRequestDto)
+		{
+			try
+			{
+				var (accessTokenPrincipal, accessTokenError) = Authentication.ValidateToken(refreshTokenRequestDto.AccessToken, _jwtSettings, validateLifetime: false);
+				if (accessTokenPrincipal == null)
+				{
+					return Result<LoginResponseDto>.Fail(accessTokenError ?? "Invalid access token.");
+				}
+
+				var (refreshTokenPrincipal, refreshTokenError) = Authentication.ValidateToken(refreshTokenRequestDto.RefreshToken, _jwtSettings, validateLifetime: true);
+				if (refreshTokenPrincipal == null)
+				{
+					return Result<LoginResponseDto>.Fail(refreshTokenError ?? "Invalid or expired refresh token.");
+				}
+
+				var accessTokenType = accessTokenPrincipal.GetTokenType();
+				var refreshTokenType = refreshTokenPrincipal.GetTokenType();
+				if (accessTokenType != "access" || refreshTokenType != "refresh")
+				{
+					return Result<LoginResponseDto>.Fail("Invalid token types.");
+				}
+
+				var userIdFromAccessToken = accessTokenPrincipal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+				var userIdFromRefreshToken = refreshTokenPrincipal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+				if (string.IsNullOrEmpty(userIdFromAccessToken) || userIdFromAccessToken != userIdFromRefreshToken)
+				{
+					return Result<LoginResponseDto>.Fail("Token mismatch.");
+				}
+
+				if (!Guid.TryParse(userIdFromAccessToken, out var userId))
+				{
+					return Result<LoginResponseDto>.Fail("Invalid user identifier in token.");
+				}
+
+				var (user, userError) = await _repo.GetByIdAsync(userId);
+				if (user == null || userError != null)
+				{
+					return Result<LoginResponseDto>.Fail(userError ?? "User not found associated with this token.");
+				}
+
+				if (!user.IsActive)
+				{
+					return Result<LoginResponseDto>.Fail("User is inactive.");
+				}
+
+				if (user.RefreshToken != refreshTokenRequestDto.RefreshToken)
+				{
+					user.RefreshToken = null;
+					await _repo.UpdateAsync(user);
+					return Result<LoginResponseDto>.Fail("Refresh token has been revoked.");
+				}
+
+				var newAccessToken = Authentication.CreateAccessToken(user, _jwtSettings);
+				if (newAccessToken.error != null)
+				{
+					return Result<LoginResponseDto>.Fail(newAccessToken.error);
+				}
+
+				var newRefreshToken = Authentication.CreateRefreshToken(user, _jwtSettings);
+				if (newRefreshToken.error != null)
+				{
+					return Result<LoginResponseDto>.Fail(newRefreshToken.error);
+				}
+
+				user.RefreshToken = newRefreshToken.token!;
+				var (updateResult, updateError) = await _repo.UpdateAsync(user);
+
+				if (updateError != null || updateResult == null)
+				{
+					return Result<LoginResponseDto>.Fail(updateError ?? "Could not update refresh token.");
+				}
+
+				var response = new LoginResponseDto
+				{
+					AccessToken = newAccessToken.token!,
+					RefreshToken = newRefreshToken.token!,
+					Error = null
+				};
+
+				return Result<LoginResponseDto>.Ok(response);
+			}
+			catch (Exception ex)
+			{
+				return Result<LoginResponseDto>.Fail($"UserService.RefreshTokenAsync error: {ex.Message}");
 			}
 		}
 	}

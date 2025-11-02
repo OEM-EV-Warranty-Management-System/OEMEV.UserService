@@ -30,6 +30,23 @@ namespace OEMEV.UserService.Api.Controllers
 			return Ok(result.Data);
 		}
 
+		[HttpPost("refresh-token")]
+		public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto refreshTokenDto)
+		{
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+
+			var result = await _serviceProviders.UserService.RefreshTokenAsync(refreshTokenDto);
+			if (!result.Success)
+			{
+				return Unauthorized(new { message = result.Error });
+			}
+
+			return Ok(result.Data);
+		}
+
 		[Authorize]
 		[HttpGet]
 		public async Task<IActionResult> GetAllUsers()
