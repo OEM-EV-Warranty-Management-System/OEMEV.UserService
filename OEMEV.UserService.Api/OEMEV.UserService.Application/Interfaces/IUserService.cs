@@ -11,5 +11,7 @@ namespace OEMEV.UserService.Application.Interfaces
 		Task<Result<UserDto>> GetUserByIdAsync(Guid id);
 		Task<Result<UserDto>> UpdateUserAsync(UserDto userDto);
 		Task<Result<int>> DeleteUserAsync(Guid id);
+		Task<Result<string>> ForgotPasswordAsync(string email);
+		Task<Result<string>> ResetPasswordAsync(ResetPasswordRequestDto resetPasswordDto);
 	}
 }

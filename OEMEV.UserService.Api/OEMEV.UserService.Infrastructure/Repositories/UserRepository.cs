@@ -83,6 +83,22 @@ namespace OEMEV.UserService.Infrastructure.Repositories
 				return (null, $"UserRepository.GetByUserNameAsync error: {ex.Message}");
 			}
 		}
+		
+		public async Task<(User? User, string? Error)> GetByEmailAsync(string email)
+		{
+			try
+			{
+				var user = await _unitOfWork
+					.GetRepository<User>()
+					.GetByPropertyAsync(u => u.Email == email, includeProperties: "Role,ServiceCenter");
+
+				return (user, null);
+			}
+			catch (Exception ex)
+			{
+				return (null, $"UserRepository.GetByEmailAsync error: {ex.Message}");
+			}
+		}
 
 		public async Task<(User? User, string? Error)> UpdateAsync(User user)
 		{

@@ -6,6 +6,7 @@ namespace OEMEV.UserService.Infrastructure.Interfaces
 	{
 		Task<(IEnumerable<User> Users, string? Error)> GetAllAsync();
 		Task<(User? User, string? Error)> GetByUserNameAsync(string userName);
+		Task<(User? User, string? Error)> GetByEmailAsync(string email);
 		Task<(User? User, string? Error)> GetByIdAsync(Guid id);
 		Task<(User? User, string? Error)> AddAsync(User user);
 		Task<(User? User, string? Error)> UpdateAsync(User user);

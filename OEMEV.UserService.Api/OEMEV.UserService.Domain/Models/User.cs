@@ -26,6 +26,10 @@ public partial class User
 
     public long? ManufacturerId { get; set; }
 
+    public string? PasswordResetToken { get; set; }
+
+    public DateTime? ResetTokenExpires { get; set; }
+
     public virtual Manufacture? Manufacturer { get; set; }
 
     public virtual Role Role { get; set; } = null!;

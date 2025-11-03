@@ -53,6 +53,10 @@ jwtSettings.IsValid();
 var key = Encoding.ASCII.GetBytes(jwtSettings.SecretKey!);
 #endregion
 
+#region Email Configuration
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+#endregion
+
 #region Authentication
 builder.Services.AddAuthentication(options =>
 {
@@ -77,16 +81,20 @@ builder.Services.AddAuthentication(options =>
 #endregion
 
 #region Dependency Injection (DI)
+// Infrastructure
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IServiceCenterRepository, ServiceCenterRepository>();
 builder.Services.AddScoped<IManufactureRepository, ManufactureRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Application Services
 builder.Services.AddScoped<IServiceProviders, ServiceProviders>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IServiceCenterService, ServiceCenterService>();
 builder.Services.AddScoped<IManufactureService, ManufactureService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
 #endregion
 
 #region Swagger Setup
@@ -137,8 +145,8 @@ var app = builder.Build();
 
 //if (app.Environment.IsDevelopment())
 //{
-	app.UseSwagger();
-	app.UseSwaggerUI(c =>
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
 	c.SwaggerEndpoint("/swagger/v1/swagger.json", "OEMEV UserService API v1");
 	c.RoutePrefix = string.Empty;

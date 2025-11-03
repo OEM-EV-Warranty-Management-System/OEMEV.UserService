@@ -6,19 +6,22 @@ using OEMEV.UserService.Infrastructure.Base;
 using OEMEV.UserService.Infrastructure.Interfaces;
 using OEMEV.UserService.Infrastructure.Libraries;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace OEMEV.UserService.Application.Services
 {
 	public class UserService : IUserService
 	{
 		private readonly IUserRepository _repo;
+		private readonly IEmailService _emailService;
 		private readonly JWTSettings _jwtSettings;
 
-		public UserService(IUserRepository repo, IOptions<JWTSettings> jwtSettings)
+		public UserService(IUserRepository repo, IOptions<JWTSettings> jwtSettings, IEmailService emailService)
 		{
 			_repo = repo;
 			_jwtSettings = jwtSettings.Value
 				?? throw new ArgumentNullException(nameof(jwtSettings), "JWT settings is not configured.");
+			_emailService = emailService;
 		}
 
 		public async Task<Result<UserDto>> AddUserAsync(UserDto userDto)
@@ -26,7 +29,7 @@ namespace OEMEV.UserService.Application.Services
 			try
 			{
 				var user = UserMappers.ToEntity(userDto);
-				if(userDto.RoleId != 5)
+				if (userDto.RoleId != 5)
 				{
 					user.PasswordHash = BCrypt.Net.BCrypt.HashPassword("@1");
 				}
@@ -253,6 +256,85 @@ namespace OEMEV.UserService.Application.Services
 			catch (Exception ex)
 			{
 				return Result<LoginResponseDto>.Fail($"UserService.RefreshTokenAsync error: {ex.Message}");
+			}
+		}
+
+		public async Task<Result<string>> ForgotPasswordAsync(string email)
+		{
+			try
+			{
+				var (user, error) = await _repo.GetByEmailAsync(email);
+				if (user == null || error != null)
+				{
+					// Không tiết lộ thông tin người dùng tồn tại hay không
+					return Result<string>.Ok("If an account with this email exists, an OTP has been sent.");
+				}
+
+				// Sinh OTP ngẫu nhiên 6 chữ số
+				var random = new Random();
+				var otp = random.Next(100000, 999999).ToString();
+
+				// Lưu OTP và thời gian hết hạn
+				user.PasswordResetToken = otp; // reuse field PasswordResetToken
+				user.ResetTokenExpires = DateTime.UtcNow.AddMinutes(10); // OTP hết hạn sau 10 phút
+
+				var (updateResult, updateError) = await _repo.UpdateAsync(user);
+				if (updateResult == null || updateError != null)
+				{
+					return Result<string>.Fail(updateError ?? "Failed to save OTP.");
+				}
+
+				// Tạo nội dung email
+				var message = $@"
+            <p>Dear {user.FullName},</p>
+            <p>Your password reset OTP is:</p>
+            <h2 style='color:#2d6cdf;font-size:24px;font-weight:bold;'>{otp}</h2>
+            <p>This OTP will expire in 10 minutes.</p>
+            <p>If you did not request a password reset, please ignore this email.</p>";
+
+				await _emailService.SendEmailAsync(email, "Your Password Reset OTP", message);
+
+				return Result<string>.Ok("If an account with this email exists, an OTP has been sent.");
+			}
+			catch (Exception)
+			{
+				return Result<string>.Fail("An error occurred while processing your request.");
+			}
+		}
+
+
+		public async Task<Result<string>> ResetPasswordAsync(ResetPasswordRequestDto resetPasswordDto)
+		{
+			try
+			{
+				var (user, error) = await _repo.GetByEmailAsync(resetPasswordDto.Email);
+				if (user == null || error != null)
+				{
+					return Result<string>.Fail("Invalid OTP or email.");
+				}
+
+				// Kiểm tra OTP và hạn sử dụng
+				if (user.PasswordResetToken != resetPasswordDto.Otp || user.ResetTokenExpires < DateTime.UtcNow)
+				{
+					return Result<string>.Fail("Invalid or expired OTP.");
+				}
+
+				// Cập nhật mật khẩu mới
+				user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(resetPasswordDto.NewPassword);
+				user.PasswordResetToken = null;
+				user.ResetTokenExpires = null;
+
+				var (updateResult, updateError) = await _repo.UpdateAsync(user);
+				if (updateResult == null || updateError != null)
+				{
+					return Result<string>.Fail(updateError ?? "Failed to reset password.");
+				}
+
+				return Result<string>.Ok("Your password has been reset successfully.");
+			}
+			catch (Exception)
+			{
+				return Result<string>.Fail("An error occurred while resetting your password.");
 			}
 		}
 	}
