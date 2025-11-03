@@ -51,7 +51,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Id, "manufactures_id_key").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+            entity.Property(e => e.Id).HasColumnName("id").UseIdentityColumn();
             entity.Property(e => e.Address)
                 .HasColumnType("character varying")
                 .HasColumnName("address");
@@ -89,7 +89,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Id, "roles_id_key1").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+            entity.Property(e => e.Id).HasColumnName("id").UseIdentityColumn();
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(now() AT TIME ZONE 'utc'::text)")
                 .HasColumnName("created_at");
@@ -112,7 +112,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Id, "service_centers_id_key").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+            entity.Property(e => e.Id).HasColumnName("id").UseIdentityColumn();
             entity.Property(e => e.Address)
                 .HasColumnType("character varying")
                 .HasColumnName("address");
@@ -161,10 +161,12 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PasswordHash)
                 .HasColumnType("character varying")
                 .HasColumnName("password_hash");
+            entity.Property(e => e.PasswordResetToken).HasColumnName("password_reset_token");
             entity.Property(e => e.PhoneNumber)
                 .HasColumnType("character varying")
                 .HasColumnName("phone_number");
             entity.Property(e => e.RefreshToken).HasColumnName("refresh_token");
+            entity.Property(e => e.ResetTokenExpires).HasColumnName("reset_token_expires");
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.ServiceCenterId).HasColumnName("service_center_id");
             entity.Property(e => e.UserName)

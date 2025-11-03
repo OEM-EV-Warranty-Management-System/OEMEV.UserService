@@ -47,6 +47,44 @@ namespace OEMEV.UserService.Api.Controllers
 			return Ok(result.Data);
 		}
 
+		[AllowAnonymous]
+		[HttpPost("forgot-password")]
+		public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto forgotPasswordDto)
+		{
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+
+			var result = await _serviceProviders.UserService.ForgotPasswordAsync(forgotPasswordDto.Email);
+			if (!result.Success)
+			{
+				// In a real app, you might want to log the specific error but return a generic message to the user.
+				return BadRequest(new { message = result.Error });
+			}
+
+			return Ok(new { message = result.Data });
+		}
+
+		[AllowAnonymous]
+		[HttpPost("reset-password")]
+		public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto resetPasswordDto)
+		{
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+
+			var result = await _serviceProviders.UserService.ResetPasswordAsync(resetPasswordDto);
+			if (!result.Success)
+			{
+				return BadRequest(new { message = result.Error });
+			}
+
+			return Ok(new { message = result.Data });
+		}
+
+
 		[Authorize]
 		[HttpGet]
 		public async Task<IActionResult> GetAllUsers()
