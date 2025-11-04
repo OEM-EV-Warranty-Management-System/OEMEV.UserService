@@ -51,7 +51,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Id, "manufactures_id_key").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Id).HasColumnName("id").UseIdentityColumn();
             entity.Property(e => e.Address)
                 .HasColumnType("character varying")
                 .HasColumnName("address");
@@ -89,7 +89,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Id, "roles_id_key1").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            entity.Property(e => e.Id).HasColumnName("id").UseIdentityColumn();
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(now() AT TIME ZONE 'utc'::text)")
                 .HasColumnName("created_at");
@@ -112,7 +112,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Id, "service_centers_id_key").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+            entity.Property(e => e.Id).HasColumnName("id").UseIdentityColumn();
             entity.Property(e => e.Address)
                 .HasColumnType("character varying")
                 .HasColumnName("address");
@@ -145,7 +145,7 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => e.UserName, "users_user_name_key").IsUnique();
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("gen_random_uuid()")
+                .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(now() AT TIME ZONE 'utc'::text)")

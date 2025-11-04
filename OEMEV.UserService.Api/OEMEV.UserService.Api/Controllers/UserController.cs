@@ -127,15 +127,6 @@ namespace OEMEV.UserService.Api.Controllers
 			if (userDto.RoleId == 2 && userDto.ManufacturerId == null)
 				return BadRequest("Users with role 2 must have a ManufacturerId.");
 
-			if ((userDto.RoleId == 3 || userDto.RoleId == 4) && userDto.ManufacturerId != null)
-				return BadRequest("Users with role 3 or 4 cannot have a ManufacturerId.");
-
-			if (userDto.RoleId == 2 && userDto.ServiceCenterId != null)
-				return BadRequest("Users with role 2 cannot have a ServiceCenterId.");
-
-			if (userDto.RoleId == 5 && (userDto.ManufacturerId != null || userDto.ServiceCenterId != null))
-				return BadRequest("Users with role 5 cannot have a ManufacturerId or ServiceCenterId.");
-
 			var result = await _serviceProviders.UserService.AddUserAsync(userDto);
 			if (!result.Success) return BadRequest(new { message = result.Error });
 
