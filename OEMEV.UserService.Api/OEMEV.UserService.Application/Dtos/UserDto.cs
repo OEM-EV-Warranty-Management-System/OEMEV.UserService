@@ -15,8 +15,16 @@ namespace OEMEV.UserService.Application.Dtos
 		public string? Email { get; set; }
 		[Required]
 		public long RoleId { get; set; }
+		[SwaggerSchema(ReadOnly = true)]
+		public string? RoleName { get; set; }
 		public long? ServiceCenterId { get; set; }
+		[SwaggerSchema(ReadOnly = true)]
+		public string? ServiceCenterName { get; set; }
 		public long? ManufacturerId { get; set; }
+		[SwaggerSchema(ReadOnly = true)]
+		public string? ManufacturerName { get; set; }
 		public bool IsActive { get; set; }
+		[SwaggerSchema(ReadOnly = true)]
+		public DateTime? CreatedAt { get; set; }
 	}
 }

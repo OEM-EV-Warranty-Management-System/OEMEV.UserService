@@ -5,7 +5,7 @@ using OEMEV.UserService.Application.Interfaces;
 
 namespace OEMEV.UserService.Api.Controllers
 {
-	[Authorize (Roles = "1")]
+	[Authorize]
 	[Route("api/[controller]")]
 	[ApiController]
 	public class RoleController : ControllerBase

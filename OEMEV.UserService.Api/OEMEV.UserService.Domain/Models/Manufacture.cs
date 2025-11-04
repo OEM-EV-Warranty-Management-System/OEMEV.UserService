@@ -1,4 +1,7 @@
-﻿namespace OEMEV.UserService.Domain.Models;
+﻿using System;
+using System.Collections.Generic;
+
+namespace OEMEV.UserService.Domain.Models;
 
 public partial class Manufacture
 {
