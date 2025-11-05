@@ -149,14 +149,9 @@ namespace OEMEV.UserService.Application.Services
 				if (error != null) return Result<UserDto>.Fail(error);
 				if (userToUpdate == null) return Result<UserDto>.Fail("User not found.");
 
-				userToUpdate.FullName = userDto.FullName;
-				userToUpdate.PhoneNumber = userDto.PhoneNumber;
-				userToUpdate.Email = userDto.Email;
-				userToUpdate.RoleId = userDto.RoleId;
-				userToUpdate.ServiceCenterId = userDto.ServiceCenterId;
+				var user = UserMappers.ToEntity(userDto);
 
-
-				var (updatedUser, updateError) = await _repo.UpdateAsync(userToUpdate);
+				var (updatedUser, updateError) = await _repo.UpdateAsync(user);
 				if (updateError != null || updatedUser == null)
 				{
 					return Result<UserDto>.Fail(updateError ?? "Failed to update user.");

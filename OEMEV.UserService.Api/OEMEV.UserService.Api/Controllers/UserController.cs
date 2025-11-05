@@ -151,6 +151,24 @@ namespace OEMEV.UserService.Api.Controllers
 				return BadRequest(ModelState);
 			}
 
+			if (userDto.RoleId != 5 && String.IsNullOrEmpty(userDto.UserName))
+				return BadRequest($"User with role {userDto.RoleId} need user name.");
+
+			if ((userDto.RoleId == 3 || userDto.RoleId == 4) && userDto.ServiceCenterId == null)
+				return BadRequest("Users with role 3 or 4 must have a ServiceCenterId.");
+
+			if (userDto.RoleId == 2 && userDto.ManufacturerId == null)
+				return BadRequest("Users with role 2 must have a ManufacturerId.");
+
+			if ((userDto.RoleId == 3 || userDto.RoleId == 4) && userDto.ManufacturerId != null)
+				return BadRequest("Users with role 3 or 4 cannot have a ManufacturerId.");
+
+			if (userDto.RoleId == 2 && userDto.ServiceCenterId != null)
+				return BadRequest("Users with role 2 cannot have a ServiceCenterId.");
+
+			if (userDto.RoleId == 5 && (userDto.ManufacturerId != null || userDto.ServiceCenterId != null))
+				return BadRequest("Users with role 5 cannot have a ManufacturerId or ServiceCenterId.");
+
 			userDto.Id = id;
 			var result = await _serviceProviders.UserService.UpdateUserAsync(userDto);
 			if (!result.Success)
@@ -193,6 +211,8 @@ namespace OEMEV.UserService.Api.Controllers
 				}
 				return BadRequest(new { message = userDto.Error });
 			}
+
+			userDto.Data.IsActive = status;	
 
 			var result = await _serviceProviders.UserService.UpdateUserAsync(userDto.Data);
 			if (!result.Success)
